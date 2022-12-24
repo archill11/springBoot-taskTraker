@@ -41,5 +41,5 @@ public class ProjectEntity {
   @Builder.Default
   @OneToMany(fetch = FetchType.LAZY) // удалить лайзи
   @JoinColumn(name = "project_id", referencedColumnName = "id")
-  List<TaskStateEntity> taskState = new ArrayList<>();
+  List<TaskStateEntity> taskStates = new ArrayList<>();
 }

@@ -34,10 +34,9 @@ import lombok.experimental.FieldDefaults;
 public class TaskStateEntity {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.SEQUENCE)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(unique = true)
   private String name;
 
   private Long ordinal;

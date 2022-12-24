@@ -25,7 +25,6 @@ public class TaskStateDto {
   @NonNull
   String name;
 
-  @NonNull
   Long ordinal;
 
   @NonNull

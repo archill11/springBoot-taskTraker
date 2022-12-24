@@ -8,7 +8,7 @@ import com.example.demo.entity.TaskStateEntity;
 @Component
 public class TaskStateDtoFactory {
 
-  public TaskStateDto makeTaskDto(TaskStateEntity entity) {
+  public TaskStateDto makeTasStateDto(TaskStateEntity entity) {
 
     return TaskStateDto
             .builder()
