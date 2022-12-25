@@ -1,10 +1,8 @@
 package com.example.demo.controller;
 
-
 import com.example.demo.dto.ProjectDto;
 import com.example.demo.dto.TaskStateDto;
 import com.example.demo.entity.ProjectEntity;
-import com.example.demo.entity.TaskEntity;
 import com.example.demo.entity.TaskStateEntity;
 import com.example.demo.exception.BadRequestException;
 import com.example.demo.exception.NotFoundException;
@@ -19,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor // эта анотация инджектит зависимовть через конструктор
@@ -36,15 +35,16 @@ public class TaskStateController {
   ProjectDtoFactory projectDtoFactory;
 
   @GetMapping("/api/projects/{project_id}/task-states")
-  public List<TaskStateDto> getTaskStates(@PathVariable String project_id) {
+  public List<TaskStateDto> getTaskStates(@PathVariable Long project_id) {
 
-    List<TaskStateEntity> taskStates = taskStateRepository.findAll();
+    ProjectEntity project = projectRepository
+            .findById(project_id)
+            .orElseThrow(() -> new NotFoundException(String.format("Project \"%s\" not found.", project_id)));
 
-    List<TaskStateDto> taskStatesDto = taskStates.stream()
-            .map(projectEntity -> taskStateDtoFactory.makeTasStateDto(projectEntity))
+    return project.getTaskStates()
+            .stream()
+            .map(taskStateEntity -> taskStateDtoFactory.makeTasStateDto(taskStateEntity))
             .collect(Collectors.toList());
-
-    return taskStatesDto;
   }
 
 
@@ -59,16 +59,32 @@ public class TaskStateController {
             .findById(project_id)
             .orElseThrow(() -> new NotFoundException(String.format("Project \"%s\" not found.", project_id)));
 
+    Optional<TaskStateEntity> optionalAnotherTaskState = taskStateRepository
+            .findTaskStateEntityByRightTaskStateIdIsNullAndProjectId(project_id); // ищем самого правого taskState в проекте
+
+
+
+    // сохраняем новый taskState в БД
     TaskStateEntity taskState = taskStateRepository.saveAndFlush(
-            TaskStateEntity.builder().name(name).build()
+            TaskStateEntity.builder().name(name).project(project).build()
     );
 
-    // добавляем taskState в проект
-    List<TaskStateEntity> taskStates = project.getTaskStates();
-    taskStates.add(taskState);
-    project.setTaskStates( taskStates );
+    optionalAnotherTaskState
+            .ifPresent(anotherTaskState -> {
+              taskState.setLeftTaskState(anotherTaskState); // устанавливаем новому taskState левого соседа
+              taskState.setRightTaskState(null);
+              anotherTaskState.setRightTaskState(taskState); // устанавливаем самому правому taskState правого соседа
+              taskStateRepository.saveAndFlush(anotherTaskState);
+            });
 
-    project = projectRepository.saveAndFlush(project);
+    TaskStateEntity savedTaskState = taskStateRepository.saveAndFlush(taskState);
+
+    /*// добавляем taskState в проект
+//    List<TaskStateEntity> taskStates = project.getTaskStates();
+//    taskStates.add(savedTaskState);
+//    project.setTaskStates( taskStates );
+//
+//    project = projectRepository.saveAndFlush(project);*/
 
     return projectDtoFactory.makeProjectDto(project);
   }

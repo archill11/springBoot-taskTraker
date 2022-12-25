@@ -15,6 +15,8 @@ public class TaskStateDtoFactory {
             .id(entity.getId())
             .name(entity.getName())
             .ordinal(entity.getOrdinal())
+            .leftTaskStateId(entity.getLeftTaskState().map(TaskStateEntity::getId).orElse(null))
+            .rightTaskStateId(entity.getRightTaskState().map(TaskStateEntity::getId).orElse(null))
             .createAt(entity.getCreateAt())
             .build();
   }

@@ -3,16 +3,9 @@ package com.example.demo.entity;
 import java.time.Instant;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Optional;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -21,6 +14,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.ColumnDefault;
 
 
 @Getter
@@ -35,17 +29,35 @@ public class TaskStateEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+  Long id;
 
-  private String name;
+  String name;
 
-  private Long ordinal;
+  Long ordinal;
+
+  @OneToOne
+  TaskStateEntity leftTaskState;
+
+  @ColumnDefault("null")
+  @OneToOne
+  TaskStateEntity rightTaskState;
+
+  @ManyToOne
+  ProjectEntity project;
 
   @Builder.Default
-  private Instant createAt = Instant.now();
+  Instant createAt = Instant.now();
 
   @Builder.Default
   @OneToMany(fetch = FetchType.LAZY)
   @JoinColumn(name = "task_state_id", referencedColumnName = "id")
-  private List<TaskEntity> tasks = new ArrayList<>();
+  List<TaskEntity> tasks = new ArrayList<>();
+
+  public Optional<TaskStateEntity> getLeftTaskState() { // так как этих сущностей может и не быть
+    return Optional.ofNullable(leftTaskState);          // а null возвращать нельзя
+  }
+
+  public Optional<TaskStateEntity> getRightTaskState() {
+    return Optional.ofNullable(rightTaskState);
+  }
 }
